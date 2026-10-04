@@ -25,7 +25,7 @@ jobs:
 
       - name: Build and test backend
         working-directory: Backend/todo-summary-assistant
-        run: ./mvnw clean verify
+        run: mvn clean verify
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
