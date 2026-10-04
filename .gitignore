@@ -1,0 +1,20 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Backend local configuration
+Backend/todo-summary-assistant/src/main/resources/application-local.properties
+
+# Build output
+**/target/
+**/build/
+**/node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
