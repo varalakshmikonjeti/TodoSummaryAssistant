@@ -11,18 +11,21 @@ function App() {
   const [notification, setNotification] = useState({ message: '', type: '' });
 
   useEffect(() => {
-    fetchTodos();
-  }, []);
+    const loadTodos = async () => {
+      try {
+        const response = await todoService.getAllTodos();
+        setTodos(response.data);
+      } catch (error) {
+        console.error('Error fetching todos:', error);
+        setNotification({
+          message: 'Error fetching todos.',
+          type: 'error'
+        });
+      }
+    };
 
-  const fetchTodos = async () => {
-    try {
-      const response = await todoService.getAllTodos();
-      setTodos(response.data);
-    } catch (error) {
-      console.error('Error fetching todos:', error);
-      showNotification('Error fetching todos.', 'error');
-    }
-  };
+    loadTodos();
+  }, []);
 
   const addTodo = async (todo) => {
     try {
@@ -58,12 +61,19 @@ function App() {
   };
 
   const toggleComplete = async (id, completed) => {
-    const todoToUpdate = todos.find(todo => todo.id === id);
+    const todoToUpdate = todos.find((todo) => todo.id === id);
+
     if (todoToUpdate) {
-      const updatedTodo = { ...todoToUpdate, completed: completed };
+      const updatedTodo = {
+        ...todoToUpdate,
+        completed: completed
+      };
+
       try {
         const response = await todoService.updateTodo(id, updatedTodo);
-        setTodos(todos.map(todo => (todo.id === id ? response.data : todo)));
+        setTodos(
+          todos.map((todo) => (todo.id === id ? response.data : todo))
+        );
         showNotification('Todo status updated!', 'success');
       } catch (error) {
         console.error('Error toggling todo completion:', error);
@@ -84,20 +94,41 @@ function App() {
 
   const showNotification = (message, type) => {
     setNotification({ message, type });
+
     setTimeout(() => {
       setNotification({ message: '', type: '' });
-    }, 5000); // Hide after 5 seconds
+    }, 5000);
   };
 
   return (
     <div className="App">
       <h1>Todo Summary Assistant</h1>
-      <Notification message={notification.message} type={notification.type} />
-      <TodoForm addTodo={addTodo} updateTodo={updateTodo} editingTodo={editingTodo} setEditingTodo={setEditingTodo} />
-      <button onClick={summarizeAndSendToSlack} className="summary-button">
+
+      <Notification
+        message={notification.message}
+        type={notification.type}
+      />
+
+      <TodoForm
+        addTodo={addTodo}
+        updateTodo={updateTodo}
+        editingTodo={editingTodo}
+        setEditingTodo={setEditingTodo}
+      />
+
+      <button
+        onClick={summarizeAndSendToSlack}
+        className="summary-button"
+      >
         Summarize Pending Todos & Send to Slack
       </button>
-      <TodoList todos={todos} deleteTodo={deleteTodo} setEditingTodo={setEditingTodo} toggleComplete={toggleComplete} />
+
+      <TodoList
+        todos={todos}
+        deleteTodo={deleteTodo}
+        setEditingTodo={setEditingTodo}
+        toggleComplete={toggleComplete}
+      />
     </div>
   );
 }
