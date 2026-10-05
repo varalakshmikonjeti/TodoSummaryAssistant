@@ -1,0 +1,29 @@
+groups:
+  - name: todo-summary-assistant
+    rules:
+      - alert: BackendDown
+        expr: up{job="todo-summary-backend"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Todo Summary backend is down"
+          description: "The Todo Summary backend has been unreachable for more than 2 minutes."
+
+      - alert: HighErrorRate
+        expr: sum(rate(http_server_requests_seconds_count{job="todo-summary-backend",status=~"5.."}[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High backend error rate"
+          description: "The Todo Summary backend is returning more than 0.1 server errors per second."
+
+      - alert: HighJvmMemoryUsage
+        expr: sum(jvm_memory_used_bytes{job="todo-summary-backend",area="heap"}) / sum(jvm_memory_max_bytes{job="todo-summary-backend",area="heap"}) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High JVM memory usage"
+          description: "JVM heap memory usage has exceeded 85% for more than 5 minutes."
