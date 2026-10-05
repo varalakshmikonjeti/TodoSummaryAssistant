@@ -47,7 +47,19 @@ jobs:
         run: npm run build
 
       - name: Build backend Docker image
-        run: docker build -t todo-summary-backend:${{ github.sha }} ./Backend/todo-summary-assistant
+        run: docker build -t konjetivaralakshmi06/todo-summary-backend:${{ github.sha }} ./Backend/todo-summary-assistant
 
       - name: Build frontend Docker image
-        run: docker build -t todo-summary-frontend:${{ github.sha }} ./Frontend/todo
+        run: docker build -t konjetivaralakshmi06/todo-summary-frontend:${{ github.sha }} ./Frontend/todo
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push backend Docker image
+        run: docker push konjetivaralakshmi06/todo-summary-backend:${{ github.sha }}
+
+      - name: Push frontend Docker image
+        run: docker push konjetivaralakshmi06/todo-summary-frontend:${{ github.sha }}
