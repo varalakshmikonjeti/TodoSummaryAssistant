@@ -1,126 +1,350 @@
 # Todo Summary Assistant
 
-A full-stack application to manage personal to-do items, summarize pending tasks using Cohere LLM, and send the summary to a Slack channel.
+A full-stack Todo application built with React and Spring Boot that lets users create, update, delete, and complete todo items, generate an AI-powered summary of pending todos using Cohere, and send that summary to Slack.
+
+The project also includes Docker containerization, automated tests, GitHub Actions CI, and Prometheus/Grafana monitoring.
 
 ## Table of Contents
 
-* [Features](#features)
-* [Tech Stack](#tech-stack)
-* [Setup Instructions](#setup-instructions)
-    * [Prerequisites](#prerequisites)
-    * [Backend Setup](#backend-setup)
-    * [Frontend Setup](#frontend-setup)
-* [LLM (Cohere) Setup](#llm-cohere-setup)
-* [Slack Integration Setup](#slack-integration-setup)
-* [Design/Architecture Decisions](#designarchitecture-decisions)
-
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Architecture](#architecture)
+- [Prerequisites](#prerequisites)
+- [Configuration](#configuration)
+- [Running Locally](#running-locally)
+- [Running Tests](#running-tests)
+- [Production Frontend Build](#production-frontend-build)
+- [Docker](#docker)
+- [Monitoring](#monitoring)
+- [CI/CD](#cicd)
+- [Application Screenshots](#application-screenshots)
+- [Design Decisions](#design-decisions)
+- [Security Notes](#security-notes)
+- [Repository](#repository)
 
 ## Features
 
-* **Create, Edit, Delete To-Do Items:** Full CRUD operations for personal to-do items.
-* **View To-Do List:** Display current to-do items with their status.
-* **Summarize Pending To-Dos:** Utilizes Cohere LLM to generate a concise summary of all pending to-do items.
-* **Send Summary to Slack:** Automatically posts the generated summary to a configured Slack channel using Incoming Webhooks.
-* **Notifications:** Provides success/failure messages for Slack operations.
+- Create todo items with a title and optional description
+- View pending and completed todos
+- Edit todo items
+- Mark todos as complete or pending
+- Delete todo items
+- Generate an AI summary of pending todos using Cohere
+- Send the generated summary to Slack using an Incoming Webhook
+- Display success and error notifications
+- Dockerized frontend and backend
+- Prometheus metrics and alert rules
+- Grafana monitoring dashboard
+- Automated frontend and backend tests
+- GitHub Actions CI pipeline
 
 ## Tech Stack
 
-* **Frontend:** HTML, CSS, Javascript, React, Axios(for API calls), 
-* **Backend:** Spring Boot (Java 17+), Maven
-* **Database:** MySQL (via Spring Data JPA and Hibernate)
-* **LLM:** Cohere API
-* **Messaging:** Slack Incoming Webhooks
-* **HTTP Client:** OkHttp (for Cohere and Slack API calls in backend)
+| Area | Technologies |
+|------|--------------|
+| Frontend | React, JavaScript, Axios, Jest, React Testing Library |
+| Backend | Java 17, Spring Boot 3.4.5, Spring Data JPA, Hibernate, Maven, OkHttp |
+| Database | MySQL (H2 in-memory for automated tests) |
+| AI / LLM | Cohere API |
+| Messaging | Slack Incoming Webhook |
+| DevOps / Monitoring | Docker, GitHub Actions, Prometheus, Grafana |
 
-## Setup Instructions
+## Project Structure
 
-### Prerequisites
+```text
+TodoSummaryAssistant/
+│
+├── Backend/
+│   └── todo-summary-assistant/
+│       ├── src/
+│       ├── pom.xml
+│       ├── Dockerfile
+│       └── .dockerignore
+│
+├── Frontend/
+│   └── todo/
+│       ├── src/
+│       ├── package.json
+│       ├── Dockerfile
+│       └── .dockerignore
+│
+├── monitoring/
+│   ├── prometheus.yml
+│   └── alert-rules.yml
+│
+├── screenshots/
+│   ├── application-running.png
+│   ├── github-actions-success.png
+│   ├── monitoring1.png
+│   ├── monitoring2.png
+│   ├── monitoring3.png
+│   ├── prometheus.png
+│   └── slack-summary.png
+│
+├── .env.example
+├── .gitignore
+└── README.md
+```
 
-* Java Development Kit (JDK) 17 or higher
-* Node.js and npm (or yarn)
-* MySQL Server running locally or accessible remotely
-* A Cohere API Key
-* A Slack Workspace and an Incoming Webhook URL
+## Architecture
 
-### Backend Setup
+                    ┌─────────────────────┐
+                    │      React UI       │
+                    │      Frontend       │
+                    └──────────┬──────────┘
+                               │
+                               │ REST API
+                               ▼
+                    ┌─────────────────────┐
+                    │   Spring Boot API   │
+                    │      Backend        │
+                    └──────┬───────┬──────┘
+                           │       │
+              ┌────────────┘       └─────────────┐
+              ▼                                  ▼
+       ┌──────────────┐                   ┌──────────────┐
+       │    MySQL     │                   │    Cohere    │
+       │   Database   │                   │     LLM      │
+       └──────────────┘                   └──────┬───────┘
+                                                 │
+                                                 ▼
+                                          ┌──────────────┐
+                                          │    Slack     │
+                                          │   Webhook    │
+                                          └──────────────┘
 
-1.  **Clone the repository:**
-    ```bash
-    git clone [https://github.com/your-username/todo-summary-assistant.git](https://github.com/your-username/todo-summary-assistant.git)
-    cd todo-summary-assistant/backend
-    ```
-2.  **Configure `application.properties`:**
-    Open `src/main/resources/application.properties` and update the following:
-    ```properties
-    spring.datasource.url=jdbc:mysql://localhost:3306/todo_db?createDatabaseIfNotExist=true
-    spring.datasource.username=root
-    spring.datasource.password=your_mysql_password_here # <-- IMPORTANT: Replace with your MySQL root password
-    cohere.api.key=YOUR_COHERE_API_KEY # <-- IMPORTANT: Replace with your Cohere API Key
-    slack.webhook.url=YOUR_SLACK_WEBHOOK_URL # <-- IMPORTANT: Replace with your Slack Incoming Webhook URL
-    ```
-3.  **Build and Run:**
-    ```bash
-    mvn clean install
-    mvn spring-boot:run
-    ```
-    The backend will start on `http://localhost:8080`.
+                    ┌─────────────────────┐
+                    │     Prometheus      │
+                    │      Metrics        │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │      Grafana        │
+                    │    Monitoring       │
+                    └─────────────────────┘
 
-### Frontend Setup
+## Prerequisites
 
-1.  **Navigate to the frontend directory:**
-    ```bash
-    cd ../frontend
-    ```
-2.  **Install dependencies:**
-    ```bash
-    npm install
-    # or yarn install
-    ```
-3.  **Run the React application:**
-    ```bash
-    npm start
-    # or yarn start
-    ```
-    The frontend will open in your browser at `http://localhost:3000`.
+Install the following before running the application locally:
 
-## LLM (Cohere) Setup
+- JDK 17+
+- Maven
+- Node.js and npm
+- MySQL
+- Docker Desktop
+- Git
 
-1.  **Create a Cohere Account:** Visit [Cohere.ai](https://cohere.ai/) and sign up for a free account.
-2.  **Obtain API Key:** Once logged in, navigate to your dashboard or API keys section to find your API key.
-3.  **Update `application.properties`:** Paste your Cohere API key into `cohere.api.key` in the backend's `application.properties` file.
+For the AI and Slack integrations you will also need:
 
-## Slack Integration Setup
+- A Cohere API key
+- A Slack Incoming Webhook URL
 
-1.  **Create a Slack App:**
-    * Go to [api.slack.com/apps](https://api.slack.com/apps).
-    * Click "Create New App" and choose "From scratch".
-    * Give your app a name (e.g., "Todo Summary Bot") and select your Slack workspace.
-2.  **Activate Incoming Webhooks:**
-    * From your app's settings page, navigate to "Features" -> "Incoming Webhooks".
-    * Toggle the "Activate Incoming Webhooks" switch to "On".
-    * Scroll down and click the "Add New Webhook to Workspace" button.
-    * Select the specific channel where you want the to-do summaries to be posted (e.g., `#general`, `#todos`, or a new channel).
-    * Click "Allow".
-3.  **Copy Webhook URL:**
-    * A unique Webhook URL will be generated. Copy this URL.
-4.  **Update `application.properties`:** Paste this URL into `slack.webhook.url` in the backend's `application.properties` file.
+## Configuration
 
-## Design/Architecture Decisions
+Create the required environment variables or configuration for the backend (for example in `application.properties`, or via environment variables).
 
-* **Separation of Concerns:** The project is cleanly separated into frontend (React) and backend (Spring Boot) directories, allowing independent development and deployment.
-* **RESTful API:** The backend exposes standard RESTful endpoints for managing todos, ensuring clear and predictable communication with the frontend.
-* **Spring Data JPA:** Leveraged for efficient and simplified database interactions with MySQL, reducing boilerplate code for data access.
-* **Service Layer:** Business logic (CRUD operations, LLM calls, Slack calls) is encapsulated within dedicated service classes, promoting modularity and testability.
-* **External API Integration:** `OkHttp` was chosen as a lightweight and efficient HTTP client for making external API calls to Cohere and Slack.
-* **CORS Configuration:** Explicit CORS configuration in Spring Boot ensures that the React frontend can communicate with the backend.
-* **Error Handling:** Basic error handling is implemented on both frontend and backend to provide user feedback and log issues.
-* **LLM Prompt Engineering:** A simple prompt is used for Cohere to instruct it on summarizing the list of to-do items. This can be further refined for better results.
-* **Notification System:** A simple notification component in React provides immediate feedback to the user about operations.
+> **Do not commit real API keys, passwords, or Slack webhook URLs to Git.**
 
-## Demo Images
+Example configuration:
 
-![Screenshot (1146)](https://github.com/user-attachments/assets/53fe53e3-b527-4659-9ab6-b462ae034fbd)
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/todo_db?createDatabaseIfNotExist=true
+spring.datasource.username=root
+spring.datasource.password=YOUR_MYSQL_PASSWORD
 
-![Screenshot (1144)](https://github.com/user-attachments/assets/474b1a46-36c8-4407-8bf9-a46ca911603b)
+cohere.api.key=YOUR_COHERE_API_KEY
+slack.webhook.url=YOUR_SLACK_WEBHOOK_URL
+```
 
-![Screenshot (1143)](https://github.com/user-attachments/assets/1e9f8783-d0df-42ce-a3f8-ec7ca5e7c078)
+Use `.env.example` as a reference for the required environment variables.
+
+## Running Locally
+
+### Backend
+
+Navigate to the backend directory:
+
+```bash
+cd Backend/todo-summary-assistant
+```
+
+Build the application:
+
+```bash
+mvn clean verify
+```
+
+Run the Spring Boot application:
+
+```bash
+mvn spring-boot:run
+```
+
+The backend API runs on the port set by `server.port` in your configuration (the frontend is configured to call `http://localhost:8081/api/todos`).
+
+### Frontend
+
+Navigate to the frontend directory:
+
+```bash
+cd Frontend/todo
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Start the React development server:
+
+```bash
+npm start
+```
+
+The frontend can then be opened in the browser (by default at `http://localhost:3000`).
+
+## Running Tests
+
+### Frontend
+
+```bash
+cd Frontend/todo
+npm test -- --watchAll=false
+```
+
+The frontend test verifies that the Todo Summary Assistant UI and the Slack summary button render correctly.
+
+### Backend
+
+```bash
+cd Backend/todo-summary-assistant
+mvn clean verify
+```
+
+The backend test suite uses an H2 in-memory database, so no MySQL instance is needed for tests.
+
+## Production Frontend Build
+
+Create an optimized production build:
+
+```bash
+cd Frontend/todo
+npm run build
+```
+
+The generated production files are placed in `Frontend/todo/build/`.
+
+## Docker
+
+The application includes separate Dockerfiles for the backend and frontend.
+
+- The **backend** image uses a multi-stage Maven build and runs the application on a Java 17 runtime image.
+- The **frontend** image uses Nginx to serve the React production build.
+
+### Build Backend Image
+
+From the repository root:
+
+```bash
+docker build -t todo-summary-backend:dev ./Backend/todo-summary-assistant
+```
+
+### Build Frontend Image
+
+```bash
+docker build -t todo-summary-frontend:dev ./Frontend/todo
+```
+
+### Verify Images
+
+```bash
+docker images todo-summary-backend
+docker images todo-summary-frontend
+```
+
+## Monitoring
+
+The project includes Prometheus and Grafana monitoring.
+
+### Prometheus
+
+- Configuration: `monitoring/prometheus.yml`
+- Alert rules: `monitoring/alert-rules.yml`
+- Local URL: <http://localhost:9090>
+
+Configured alerts:
+
+| Alert | Purpose |
+|-------|---------|
+| `BackendDown` | Backend service is unreachable |
+| `HighErrorRate` | Elevated rate of failed requests |
+| `HighJvmMemoryUsage` | JVM memory usage is unusually high |
+
+### Grafana
+
+Grafana is used to visualize application monitoring data.
+
+- Local URL: <http://localhost:3000>
+
+The monitoring setup provides visibility into application health, JVM metrics, and alert states.
+
+> **Note:** Grafana and the React development server both default to port 3000. If you run them at the same time, start one of them on a different port.
+
+## CI/CD
+
+GitHub Actions is configured to automatically build and test the project whenever changes are pushed to the repository.
+
+The CI workflow validates the application using automated frontend and backend checks.
+
+## Application Screenshots
+
+### Application Running
+
+![Application Running](screenshots/application-running.png)
+
+### Slack Summary
+
+The application generates a summary of pending todos and sends it to Slack.
+
+![Slack Summary](screenshots/slack-summary.png)
+
+### GitHub Actions
+
+![GitHub Actions Success](screenshots/github-actions-success.png)
+
+### Prometheus Monitoring
+
+![Prometheus](screenshots/prometheus.png)
+
+### Grafana Monitoring
+
+![Grafana Dashboard 1](screenshots/monitoring1.png)
+
+![Grafana Dashboard 2](screenshots/monitoring2.png)
+
+![Grafana Dashboard 3](screenshots/monitoring3.png)
+
+## Design Decisions
+
+- **Separation of concerns:** The frontend and backend are separate applications, so they can be developed, tested, and containerized independently.
+- **REST API:** The Spring Boot backend exposes REST endpoints for todo management and the summary feature.
+- **Spring Data JPA:** Spring Data JPA and Hibernate simplify database access and persistence.
+- **Service layer:** Business logic lives in service components for better maintainability and testability.
+- **External API integration:** OkHttp is used to communicate with external services such as Cohere and Slack.
+- **Monitoring:** Prometheus collects application metrics and Grafana provides visualization.
+- **Automated testing:** The frontend uses Jest and React Testing Library; the backend uses Spring Boot testing with an H2 test database.
+- **Containerization:** Separate Docker images for frontend and backend provide consistent deployment environments.
+
+## Security Notes
+
+- Never commit API keys or Slack webhook URLs.
+- Do not commit real database passwords.
+- Use environment variables or local configuration for secrets.
+- Keep `.env` files containing secrets untracked (they should be listed in `.gitignore`).
+
+## Repository
+
+GitHub: <https://github.com/varalakshmikonjeti/TodoSummaryAssistant>
