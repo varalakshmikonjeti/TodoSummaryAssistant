@@ -17,7 +17,7 @@ The project also includes Docker containerization, automated tests, GitHub Actio
 - [Production Frontend Build](#production-frontend-build)
 - [Docker](#docker)
 - [Monitoring](#monitoring)
-- [CI/CD](#cicd)
+- [CI/CD and Docker Registry](#cicd-and-docker-registry)
 - [Application Screenshots](#application-screenshots)
 - [Design Decisions](#design-decisions)
 - [Security Notes](#security-notes)
@@ -52,7 +52,6 @@ The project also includes Docker containerization, automated tests, GitHub Actio
 
 ## Project Structure
 
-```text
 TodoSummaryAssistant/
 │
 ├── Backend/
@@ -85,7 +84,6 @@ TodoSummaryAssistant/
 ├── .env.example
 ├── .gitignore
 └── README.md
-```
 
 ## Architecture
 
@@ -293,11 +291,15 @@ The monitoring setup provides visibility into application health, JVM metrics, a
 
 > **Note:** Grafana and the React development server both default to port 3000. If you run them at the same time, start one of them on a different port.
 
-## CI/CD
+## CI/CD and Docker Registry
 
-GitHub Actions is configured to automatically build and test the project whenever changes are pushed to the repository.
-
-The CI workflow validates the application using automated frontend and backend checks.
+- GitHub Actions automatically builds and tests the backend and frontend on pushes and pull requests to the `main` branch.
+- The CI workflow builds Docker images for both the Spring Boot backend and the React frontend.
+- Docker images are automatically pushed to Docker Hub after a successful workflow run.
+- Docker Hub repositories:
+  - `konjetivaralakshmi06/todo-summary-backend`
+  - `konjetivaralakshmi06/todo-summary-frontend`
+- Docker images are tagged with the GitHub commit SHA for version traceability.
 
 ## Application Screenshots
 
@@ -337,6 +339,7 @@ The application generates a summary of pending todos and sends it to Slack.
 - **Monitoring:** Prometheus collects application metrics and Grafana provides visualization.
 - **Automated testing:** The frontend uses Jest and React Testing Library; the backend uses Spring Boot testing with an H2 test database.
 - **Containerization:** Separate Docker images for frontend and backend provide consistent deployment environments.
+- **CI/CD automation:** GitHub Actions runs the backend and frontend tests, builds both Docker images, authenticates with Docker Hub using repository secrets, and publishes the images tagged with the Git commit SHA.
 
 ## Security Notes
 
